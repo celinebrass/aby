@@ -36,6 +36,7 @@ router.get('/predict', function (req, res, next)  {
 						bills.push(bill);
 					}
 				});
+				console.log(bills = "XXXXX");
 				done(err, bills);
 			});
 		},
@@ -44,8 +45,9 @@ router.get('/predict', function (req, res, next)  {
 			apiCall.set('Content-Type', 'application/json');
 			apiCall.end(function (err, response) {
 				var accounts = JSON.parse(response.text);
+				console.log(bills + "YYYYYYYYYYY");
 				done(err, bills, accounts);
-			})
+			});
 		},
 
 		function (bills, accounts, done){
@@ -54,6 +56,7 @@ router.get('/predict', function (req, res, next)  {
 			var deposits = [];
 			async.forEach(accounts, function (account, callback){
 				console.log("111111111111");
+				console.log(bills + "YYYYYYYYYYY");
 				var type = account.type;
 				async.waterfall([
 					function (done){
@@ -111,9 +114,9 @@ router.get('/predict', function (req, res, next)  {
 		function (bills, accounts, creditPurchases, checkingPurchases, deposits, done){
 			console.log("333333");
 			var billGroups = {};
-			bills.forEach( function (bill){
+			for (bill in bills){
 				var payee = bill.payee;
-				if (billGroups[payee].length == undefined ){
+				if (billGroups[payee] == undefined ){
 					console.log("in if");
 					billGroups[payee] = [];
 					billGroups[payee].push(bill);
@@ -122,7 +125,7 @@ router.get('/predict', function (req, res, next)  {
 					console.log("in else");
 					billGroups[payee].push(bill);
 				}
-			});
+			};
 			done(null, accounts, creditPurchases, checkingPurchases, deposits, billGroups);
 		},
 		function (accounts, creditPurchases, checkingPurchases, deposits, billGroups, done){
@@ -160,7 +163,7 @@ router.get('/predict', function (req, res, next)  {
 		},
 		function (accounts, billGroups, purchaseGroups, depositGroups) {
 			console.log("WOOOOOOO");
-			console.log(billGroups);
+			console.log(purchaseGroups);
 		}
 	])
 
