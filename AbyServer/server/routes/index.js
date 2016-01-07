@@ -31,10 +31,7 @@ router.get('/predict', function (req, res, next)  {
 				var billArray = JSON.parse(response.text);
 				var minDate = sixMonths();
 				billArray.forEach(function(bill){
-					console.log(bill);
 					var billDate  = toDate(bill.creation_date);
-					console.log(billDate.getTime());
-					console.log(minDate.getTime());
 					if (billDate.getTime()>=minDate.getTime()){
 						bills.push(bill);
 					}
@@ -47,7 +44,6 @@ router.get('/predict', function (req, res, next)  {
 			apiCall.set('Content-Type', 'application/json');
 			apiCall.end(function (err, response) {
 				var accounts = JSON.parse(response.text);
-				console.log(accounts);
 				done(err, bills, accounts);
 			})
 		},
@@ -57,9 +53,11 @@ router.get('/predict', function (req, res, next)  {
 			var checkingPurchases = [];
 			var deposits = [];
 			async.forEach(accounts, function (account, callback){
+				console.log("111111111111");
 				var type = account.type;
 				async.waterfall([
 					function (done){
+						console.log("2222222");
 						var purchases = [];
 						if (type == "Checking" | type =="Credit Card");
 						var apiCall = request.get('http://api.reimaginebanking.com/accounts/'+ account._id + '/purchases?key=' + key);
@@ -68,7 +66,6 @@ router.get('/predict', function (req, res, next)  {
 							var purchaseArray = JSON.parse(response.text);
 							var minDate = sixMonths();
 							purchaseArray.forEach(function(purchase){
-								//console.log(purchase);
 								var purchaseDate  = toDate(purchase.purchase_date);
 								if (purchaseDate.getTime()>=minDate.getTime()){
 									purchases.push(purchase);
@@ -93,7 +90,6 @@ router.get('/predict', function (req, res, next)  {
 							var depositArray = JSON.parse(response.text);
 							var minDate = sixMonths();
 							depositArray.forEach(function(deposit){
-								//console.log(purchase);
 								var depositDate = toDate(deposit.transaction_date);
 								if (depositDate.getTime()>=minDate.getTime()){
 									deposits.push(deposit);
@@ -109,27 +105,33 @@ router.get('/predict', function (req, res, next)  {
 				}); 
 			}, function (err){
 				done(null, bills, accounts, creditPurchases, checkingPurchases, deposits);
-			}
+			});
 		},
 		//now, try to find patterns
 		function (bills, accounts, creditPurchases, checkingPurchases, deposits, done){
+			console.log("333333");
 			var billGroups = {};
 			bills.forEach( function (bill){
 				var payee = bill.payee;
 				if (billGroups[payee].length == undefined ){
+					console.log("in if");
 					billGroups[payee] = [];
 					billGroups[payee].push(bill);
 				}
 				else {
+					console.log("in else");
 					billGroups[payee].push(bill);
 				}
 			});
-			//console.log(creditPurchases);
-			done(err, accounts, creditPurchases, checkingPurchases, deposits, billGroups);
+			done(null, accounts, creditPurchases, checkingPurchases, deposits, billGroups);
 		},
 		function (accounts, creditPurchases, checkingPurchases, deposits, billGroups, done){
+			console.log("4444444");
 			var purchaseGroups = {};
-			creditpurchases.forEach(function (purchase) {
+			var i = 0;
+			creditPurchases.forEach(function (purchase) {
+				//console.log(i);
+				i++;
 				var merchant = purchase.merchant_id;
 				if (purchaseGroups[merchant] == undefined){
 					purchaseGroups[merchant] = [purchase];
@@ -139,31 +141,32 @@ router.get('/predict', function (req, res, next)  {
 				}
 
 			});
-			done(accounts, deposits, billGroups, purchaseGroups);
+			done(null, accounts, deposits, billGroups, purchaseGroups);
 		},
-		function (accounts, deposits, billGroups, purchaseGroups done){
+		function (accounts, deposits, billGroups, purchaseGroups, done){
 			var depositGroups = {};
-			deposits.forEach(function (purchase) {
+			console.log("5555");
+			deposits.forEach(function (deposit) {
 				var descript = deposit.description;
 				if (depositGroups[descript] == undefined){
-					depositGroups[descript]] = [deposit];
+					depositGroups[descript] = [deposit];
 				}
 				else {
 					depositGroups[descript].push(deposit);
 				}
 
 			});
-			done(accounts, billGroups, purchaseGroups, depositGroups);
+			done(null, accounts, billGroups, purchaseGroups, depositGroups);
 		},
 		function (accounts, billGroups, purchaseGroups, depositGroups) {
-			
+			console.log("WOOOOOOO");
+			console.log(billGroups);
 		}
 	])
 
 });
 //parses a JSON date string from API into a js date
 function toDate(jsonString) {
-	console.log(jsonString);
 	jsonString = jsonString.replace("\\\"", "");
 	jsonString = jsonString.replace("\\\\", "");
 	jsonString = jsonString.replace("\"", "");
