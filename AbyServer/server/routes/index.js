@@ -56,7 +56,6 @@ router.get('/predict', function (req, res, next)  {
 			var deposits = [];
 			async.forEach(accounts, function (account, callback){
 				console.log("111111111111");
-				console.log(bills + "YYYYYYYYYYY");
 				var type = account.type;
 				async.waterfall([
 					function (done){
@@ -162,14 +161,68 @@ router.get('/predict', function (req, res, next)  {
 			done(null, accounts, billGroups, purchaseGroups, depositGroups);
 		},
 		function (accounts, billGroups, purchaseGroups, depositGroups) {
-			console.log("WOOOOOOO");
-			console.log(purchaseGroups);
-		}
+			for (var group in purchaseGroups){
+				var purchases = purchaseGroups[group];
+
+				//if (purchases.length < 12) {continue;}
+				//else {
+				var dates = [];
+				purchases.map(function(purchase) {
+					var date = toDate(purchase.purchase_date);
+					dates.push(date.getTime());
+				});
+				dates.sort();
+				for (var i = 0; i<dates.length; i++){
+					var date = new Date(dates[i]);
+					dates[i] = date;
+				}
+				var subscription = false;
+				var distances = [];
+
+				for (var i = 1; i<dates.length; i++){
+					var distance = dates[i].getDate() - dates[i-1].getDate();
+					console.log("distance is" + distance);
+					//var distances = [];
+					distances.push(distance);
+				}
+				console.log(distances);//SORT THROUGH ARRAYS
+				var counter = 0.0;
+				for(int i = 0; i<distances.length; i++){
+					if (distances[i]==0){
+						counter++;
+					}
+				}
+				if ((counter/distances.length).toPrecision(2)>0.7){
+					console.log("FOUND MONTHLY SUBSCRIPTION");
+					subscription = true;
+				}
+				if (!subscription){
+					var days = [];
+					for (var i = 1; i<dates.length; i++){
+						var distance = dates[i].getDay() - dates[i-1].getDay();
+						//var distances = [];
+						days.push(distance);
+					}
+					var counter = 0.0;
+					for(int i = 0; i<days.length; i++){
+						if (days[i]==0){
+							counter++;
+						}
+					}
+					if ((counter/distances.length).toPrecision(2)>0.7){
+						console.log("FOUND WEEKLY SUBSCRIPTION");
+						//subscription = true;
+					}
+
+				}
+			}
+		},
 	])
 
 });
 //parses a JSON date string from API into a js date
 function toDate(jsonString) {
+	console.log(jsonString);
 	jsonString = jsonString.replace("\\\"", "");
 	jsonString = jsonString.replace("\\\\", "");
 	jsonString = jsonString.replace("\"", "");
