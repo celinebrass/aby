@@ -2,8 +2,6 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var request = require('superagent');
-var Parse = require('parse');
-Parse.initialize("KCRcO4MK7dW8maRqktTwyXGswsP8NGxNC5QsnAaH", "nQBdEWP0OpyNSZNpbzJ9N8PdJtXTF1mS0L4Q6X9S");
 
 var key = "1a18b43f3fb7cdb8a3a25fb703a5e848";
 
@@ -25,7 +23,7 @@ router.get('/', function(req, res, next) {
 
 router.get('/predict', function (req, res, next)  {
 	var bills = [];
-	async.waterfall([
+	async.waterfall([ 
 		function (done){
 			var apiCall = request.get('http://api.reimaginebanking.com/customers/' + customer + '/bills?key=' + key);
 			apiCall.set('Content-Type', 'application/json');
@@ -57,6 +55,7 @@ router.get('/predict', function (req, res, next)  {
 		function (bills, accounts, done){
 			var creditPurchases = [];
 			var checkingPurchases = [];
+			var deposits = [];
 			async.forEach(accounts, function (account, callback){
 				var type = account.type;
 				async.waterfall([
@@ -87,48 +86,78 @@ router.get('/predict', function (req, res, next)  {
 						}
 						done(null);
 					},
+					function (done){
+						var apiCall = request.get('http://api.reimaginebanking.com/accounts/'+ account._id + '/deposits?key=' + key);
+						apiCall.set('Content-Type', 'application/json');
+						apiCall.end(function (err, response) {
+							var depositArray = JSON.parse(response.text);
+							var minDate = sixMonths();
+							depositArray.forEach(function(deposit){
+								//console.log(purchase);
+								var depositDate = toDate(deposit.transaction_date);
+								if (depositDate.getTime()>=minDate.getTime()){
+									deposits.push(deposit);
+								}
+							});
+							done(null)
+						});
+
+					}
 
 				], function (err){
 					callback();
-				});
-			},
-			function (err){
-				var billGroups = {};
-				bills.forEach( function (bill){
-					var payee = bill.payee;
-					if (billGrouds[payee].length == undefined ){
-						billGroups[payee] = [];
-						billGroups[payee].push(bill);
-					}
-					else {
-						billGroups[payee].push(bill);
-					}
-					done(null, billgroups);
-				})
-				//console.log(creditPurchases);
-				done(err, bills, accounts, creditPurchases, checkingPurchases)
-			};
+				}); 
+			}, function (err){
+				done(null, bills, accounts, creditPurchases, checkingPurchases, deposits);
+			}
 		},
 		//now, try to find patterns
-		function (err){
-				var billGroups = {};
-				bills.forEach( function (bill){
-					var payee = bill.payee;
-					if (billGrouds[payee].length == undefined ){
-						billGroups[payee] = [];
-						billGroups[payee].push(bill);
-					}
-					else {
-						billGroups[payee].push(bill);
-					}
-					done(null, billgroups);
-				})
-				//console.log(creditPurchases);
-				done(err, bills, accounts, creditPurchases, checkingPurchases)
-			}
+		function (bills, accounts, creditPurchases, checkingPurchases, deposits, done){
+			var billGroups = {};
+			bills.forEach( function (bill){
+				var payee = bill.payee;
+				if (billGroups[payee].length == undefined ){
+					billGroups[payee] = [];
+					billGroups[payee].push(bill);
+				}
+				else {
+					billGroups[payee].push(bill);
+				}
+			});
+			//console.log(creditPurchases);
+			done(err, accounts, creditPurchases, checkingPurchases, deposits, billGroups);
+		},
+		function (accounts, creditPurchases, checkingPurchases, deposits, billGroups, done){
+			var purchaseGroups = {};
+			creditpurchases.forEach(function (purchase) {
+				var merchant = purchase.merchant_id;
+				if (purchaseGroups[merchant] == undefined){
+					purchaseGroups[merchant] = [purchase];
+				}
+				else {
+					purchaseGroups[merchant].push(purchase);
+				}
+
+			});
+			done(accounts, deposits, billGroups, purchaseGroups);
+		},
+		function (accounts, deposits, billGroups, purchaseGroups done){
+			var depositGroups = {};
+			deposits.forEach(function (purchase) {
+				var descript = deposit.description;
+				if (depositGroups[descript] == undefined){
+					depositGroups[descript]] = [deposit];
+				}
+				else {
+					depositGroups[descript].push(deposit);
+				}
+
+			});
+			done(accounts, billGroups, purchaseGroups, depositGroups);
+		},
+		function (accounts, billGroups, purchaseGroups, depositGroups) {
+			
 		}
-
-
 	])
 
 });
