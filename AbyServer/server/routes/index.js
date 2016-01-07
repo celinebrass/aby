@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var request = require('superagent');
+var Parse = require('parse');
+Parse.initialize("KCRcO4MK7dW8maRqktTwyXGswsP8NGxNC5QsnAaH", "nQBdEWP0OpyNSZNpbzJ9N8PdJtXTF1mS0L4Q6X9S");
 
 var key = "1a18b43f3fb7cdb8a3a25fb703a5e848";
 
@@ -23,7 +25,7 @@ router.get('/', function(req, res, next) {
 
 router.get('/predict', function (req, res, next)  {
 	var bills = [];
-	async.waterfall([ 
+	async.waterfall([
 		function (done){
 			var apiCall = request.get('http://api.reimaginebanking.com/customers/' + customer + '/bills?key=' + key);
 			apiCall.set('Content-Type', 'application/json');
@@ -88,7 +90,7 @@ router.get('/predict', function (req, res, next)  {
 
 				], function (err){
 					callback();
-				}); 
+				});
 			},
 			function (err){
 				var billGroups = {};
