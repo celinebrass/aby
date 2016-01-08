@@ -132,21 +132,7 @@ router.get('/predict', function (req, res, next)  {
 			});
 			done(null, accounts, billGroups, purchaseGroups);
 		},
-		/*function (accounts, deposits, billGroups, purchaseGroups, done){
-			var depositGroups = {};
-			console.log("5555");
-			deposits.forEach(function (deposit) {
-				var descript = deposit.description;
-				if (depositGroups[descript] == undefined){
-					depositGroups[descript] = [deposit];
-				}
-				else {
-					depositGroups[descript].push(deposit);
-				}
 
-			});
-			done(null, accounts, billGroups, purchaseGroups, depositGroups);
-		},*/
 		function (accounts, billGroups, purchaseGroups, done) {
 			for (var group in purchaseGroups){
 				var purchases = purchaseGroups[group];
@@ -447,13 +433,10 @@ router.get('/expenseList', function (req, res, next) {
 			var apiCall = request.get('http://api.reimaginebanking.com/customers/'+customer+ '/accounts?key=' + key);
 			apiCall.set('Content-Type', 'application/json');
 			apiCall.end(function (err, response) {
-				console.log(response);
-				console.log("in response");
-				console.log(response.text);
+
 				var accounts = JSON.parse(response.text);
 				console.log(accounts.length);
 				for (var i = 0; i<accounts.length; i++){
-					console.log("iiiii" + i);
 					if (accounts[i].type == "Credit Card") {
 						creditAccount = accounts[i];
 						creditBal += accounts[i].balance;
@@ -475,7 +458,6 @@ router.get('/expenseList', function (req, res, next) {
 				var today = new Date();
 				var minDate = new Date(today.getYear(), today.getMonth(), 1);
 				for ( var i = 0; i<purchaseArray.length; i++){
-					console.log("****" + i);
 					var purchase = purchaseArray[i];
 					var purchaseDate  = toDate(purchase.purchase_date);
 					if (purchaseDate.getTime()>=minDate.getTime()){
@@ -487,35 +469,43 @@ router.get('/expenseList', function (req, res, next) {
 		},
 		function (expenses, habits, bills, deposits, checkingBal, creditBal, account, purchases, done) {
 			console.log("7")
+			//console.log(habits);
 			var habitArray = [];
-			var billArray = [];
-			for (var i = 0; i<habits.length; i ++){
+			//var billArray = [];
+			console.log(habits.length + "*8*8*8*")
+			for (var i = 0; i<habits.length; i++){
 				var habit = habits[i];
+				console.log(habit);
 				var merchant = habit.merchantID;
-				var habitObj = {'total' : habit.amount,
+				var habitObj = {'total' : habit.get("amount"),
 								'used'  : 0.0,
-								'title' : habit.title};
-				for (var i = 0; i<purchases.length; i++){
-					var purchase = purchases[i];
+								'title' : habit.get("title")}
+				var splices = [];
+				var other = [];
+				for (var j = 0; j<purchases.length; j++){
+					var purchase = purchases[j];
 					if (purchase.merchant_id == merchant){
 						habit.total-=purchase.amount;
-						purchases.splice(i);
+						splices.push(j);	
+					}
+					else {
+						other.push(purchase);
 					}
 				}
-				habitArray.push(habit);
+				habitArray.push(habitObj);
 			}
-			done(null, expenses, bills, deposits, checkingBal, creditBal, account, purchases, habitArray)
+			done(null, expenses, bills, deposits, checkingBal, creditBal, account, other, habitArray)
 		},
-		function (expenses, bills, deposits, checkingBal, creditBal, account, purchases, habitArray, done) {
+		function (expenses, bills, deposits, checkingBal, creditBal, account, other, habitArray, done) {
 			console.log("8")
 			var otherBalance = 0.0
-			for (var i = 0; i<purchases.length; i++){
-				var purchase = purchases[i];
+			for (var i = 0; i<other.length; i++){
+				var purchase = other[i];
 				otherBalance+=purchase.amount;
 			}
-			done (null, expenses, bills, deposits, checkingBal, creditBal, account, purchases, habitArray, otherBalance)
+			done (null, expenses, bills, deposits, checkingBal, creditBal, account, habitArray, otherBalance)
 		},
-		function (expenses, bills, deposits, checkingBal, creditBal, account, purchases, habitArray, otherBalance, done){
+		function (expenses, bills, deposits, checkingBal, creditBal, account, habitArray, otherBalance, done){
 			console.log("9")
 			var temp = { "habits": habitArray,
 						 "bills" : bills,
