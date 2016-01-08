@@ -44,7 +44,7 @@ router.get('/expense', function(req, res, next) {
       var out = [];
       for (i = 0; i < result.length; i++) {
         var cur = result[i];
-        console.log(cur.id);
+        // console.log(cur.id);
         var temp = {
           id: cur.id,
           amount: cur.get("amount"),
