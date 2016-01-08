@@ -146,7 +146,7 @@ router.get('/:type/:id', function(req, res, next) {
 
     case "bill":
       var Expense = Parse.Object.extend("Bill");
-      var query = new Parse.Query(Expense);
+      var query = new Parse.Query(Bill);
       query.get(req.params.id, {
         success: function(cur) {
           var temp = {
@@ -167,7 +167,7 @@ router.get('/:type/:id', function(req, res, next) {
 
     case "habit":
       var Expense = Parse.Object.extend("Habit");
-      var query = new Parse.Query(Expense);
+      var query = new Parse.Query(Habit);
       query.get(req.params.id, {
         success: function(cur) {
           var temp = {
