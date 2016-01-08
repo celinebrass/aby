@@ -476,10 +476,14 @@ router.get('/expenseList', function (req, res, next) {
 			for (var i = 0; i<habits.length; i++){
 				var habit = habits[i];
 				console.log(habit);
+				console.log(habit.id);
 				var merchant = habit.merchantID;
+				console.log(habit.get("objectId"));
 				var habitObj = {'total' : habit.get("amount"),
 								'used'  : 0.0,
-								'title' : habit.get("title")}
+								'title' : habit.get("title"),
+								'id'     : habit.id
+							}
 				var splices = [];
 				var other = [];
 				for (var j = 0; j<purchases.length; j++){
