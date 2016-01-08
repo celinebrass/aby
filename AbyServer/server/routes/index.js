@@ -55,7 +55,7 @@ router.get('/predict', function (req, res, next)  {
 		function (bills, accounts, done){
 			var creditPurchases = [];
 			var checkingPurchases = [];
-			var deposits = [];
+			//var deposits = [];
 			async.forEach(accounts, function (account, callback){
 				console.log("111111111111");
 				var type = account.type;
@@ -87,7 +87,7 @@ router.get('/predict', function (req, res, next)  {
 						}
 						done(null);
 					},
-					function (done){
+					/*function (done){
 						var apiCall = request.get('http://api.reimaginebanking.com/accounts/'+ account._id + '/deposits?key=' + key);
 						apiCall.set('Content-Type', 'application/json');
 						apiCall.end(function (err, response) {
@@ -102,17 +102,17 @@ router.get('/predict', function (req, res, next)  {
 							done(null)
 						});
 
-					}
+					}*/
 
 					], function (err){
 						callback();
 					}); 
-}, function (err){
-	done(null, bills, accounts, creditPurchases, checkingPurchases, deposits);
-});
-},
+		}, function (err){
+			done(null, bills, accounts, creditPurchases, checkingPurchases);
+		});
+		},
 		//now, try to find patterns
-		function (bills, accounts, creditPurchases, checkingPurchases, deposits, done){
+		function (bills, accounts, creditPurchases, checkingPurchases, done){
 			console.log("333333");
 			var billGroups = new Map();
 			for (bill in bills){
@@ -127,9 +127,9 @@ router.get('/predict', function (req, res, next)  {
 					billGroups[payee].push(bill);
 				}
 			};
-			done(null, accounts, creditPurchases, checkingPurchases, deposits, billGroups);
+			done(null, accounts, creditPurchases, checkingPurchases, billGroups);
 		},
-		function (accounts, creditPurchases, checkingPurchases, deposits, billGroups, done){
+		function (accounts, creditPurchases, checkingPurchases, billGroups, done){
 			console.log("4444444");
 			var purchaseGroups = {};
 			var i = 0;
@@ -145,9 +145,9 @@ router.get('/predict', function (req, res, next)  {
 				}
 
 			});
-			done(null, accounts, deposits, billGroups, purchaseGroups);
+			done(null, accounts, billGroups, purchaseGroups);
 		},
-		function (accounts, deposits, billGroups, purchaseGroups, done){
+		/*function (accounts, deposits, billGroups, purchaseGroups, done){
 			var depositGroups = {};
 			console.log("5555");
 			deposits.forEach(function (deposit) {
@@ -161,13 +161,14 @@ router.get('/predict', function (req, res, next)  {
 
 			});
 			done(null, accounts, billGroups, purchaseGroups, depositGroups);
-		},
-		function (accounts, billGroups, purchaseGroups, depositGroups, done) {
+		},*/
+		function (accounts, billGroups, purchaseGroups, done) {
 			for (var group in purchaseGroups){
 				var purchases = purchaseGroups[group];
 
 				var dates = [];
 				var amounts = []
+				var title = purchases[0].description;
 				purchases.map(function(purchase) {
 					var date = toDate(purchase.purchase_date);
 					dates.push(date.getTime());
@@ -214,7 +215,7 @@ router.get('/predict', function (req, res, next)  {
 					var data = {
 						day: finalDay,
 						//TODO: get title of 
-						title: group,
+						title: title,
 						amount: avgDol,
 						repeat: "month"
 					}
@@ -266,7 +267,7 @@ router.get('/predict', function (req, res, next)  {
 						var data = {
 							day: max,
 							//TODO: get title of 
-							title: group,
+							title: title,
 							amount: avgDol,
 							repeat: "month"
 						}
@@ -281,7 +282,7 @@ router.get('/predict', function (req, res, next)  {
 						subscription = true;
 					}
 					if(!subscription){
-						console.log("lookgng for habit");
+						console.log("looking for habit");
 						if (purchases.length<12){continue;}
 
 						console.log("lookgng for habit--more than 12 found");
@@ -299,27 +300,35 @@ router.get('/predict', function (req, res, next)  {
 								monthMap[month].push(purchase);
 							}
 						});
-						console.log("*******" + monthMap.size);
 						var average;
+						var size = 0;
+						var total = 0.0;
 						for (month in monthMap){
-							console.log("IN FOR LOOP WOOOOOOOOOO");
+							size++;
 							console.log(month);
 							var purchases = monthMap[month];
-							var total = 0.0;
-							for (purchase in purchases){
-								total+=purchase.amount;
+							for (var i = 0; i<purchases.length; i++){
+							//for (purchase in purchases){
+								var purchase = purchases[i];
+								console.log(purchase);
+								console.log("old total is" + total);
+								total += parseFloat(purchase.amount);
+								console.log("new total is" + total);
 							}
-							average = (total/monthMap.size);
 							console.log("FOUND HABIT OBJECT");
 						}
+						console.log("FINAL NUMBERS");
+						console.log(total);
+						console.log(size);
+						average = (total/size).toPrecision(2);
 						var Habit = Parse.Object.extend("Habit");
-						var Habit = new Habit();
+						var newHabit = new Habit();
 						var data = {
 							//TODO: get title of 
-							title: group,
+							title: title,
 							amount: average
 						}
-						Habit.save(data, {
+						newHabit.save(data, {
 							success: function(ret) {
 								console.log("Guessed Habit has been pushed to Parse");
 							},
@@ -332,12 +341,13 @@ router.get('/predict', function (req, res, next)  {
 				}
 
 			}
-			done(null, accounts, billGroups, depositGroups);
-		}, function (accounts, billGroups, depositGroups, done){
+			done(null, accounts, billGroups);
+		}, function (accounts, billGroups, done){
 			console.log(billGroups.size + "********");
 			for (var i = 0; i<billGroups.size; i++){
 			//for (billGroup in billGroups){
 				billGroup = billGroups[i];
+				var title = billGroup.nickname;
 				console.log("GETTING INTO LOOP");
 				console.log("Billgroup is")
 				var bills = billGroups[billGroup];
@@ -379,7 +389,7 @@ router.get('/predict', function (req, res, next)  {
 					var newBill = new Bill();
 					var data = {
 						day: day,
-						title: billGroup,
+						title: title,
 						amount: average,
 						repeat: "month"
 					}
@@ -393,66 +403,9 @@ router.get('/predict', function (req, res, next)  {
 					});
 				}
 			}
-			done(null, depositGroups);
-		}, function (depositGroups, done){
-			for (group in depositGroups){
-				var deposits = depositGroups[group];
-
-				//if (purchases.length < 12) {continue;}
-				//else {
-					var dates = [];
-					deposits.map(function(deposit) {
-						var date = toDate(deposit.transaction_date);
-						dates.push(date.getTime());
-					});
-					dates.sort();
-					for (var i = 0; i<dates.length; i++){
-						var date = new Date(dates[i]);
-						dates[i] = date;
-					}
-					var subscription = false;
-					var distances = [];
-
-					for (var i = 1; i<dates.length; i++){
-						var distance = dates[i].getDate() - dates[i-1].getDate();
-						console.log("distance is" + distance);
-					//var distances = [];
-					distances.push(distance);
-				}
-				console.log(distances);//SORT THROUGH ARRAYS
-				var counter = 0.0;
-				for(var i = 0; i<distances.length; i++){
-					if (distances[i]==0){
-						counter++;
-					}
-				}
-				if ((counter/distances.length).toPrecision(2)>0.7){
-					console.log("FOUND MONTHLY DEPOSIT");
-					subscription = true;
-				}
-				if (!subscription){
-					var days = [];
-					for (var i = 1; i<dates.length; i++){
-						var distance = dates[i].getDay() - dates[i-1].getDay();
-						//var distances = [];
-						days.push(distance);
-					}
-					var counter = 0.0;
-					for(var i = 0; i<days.length; i++){
-						if (days[i]==0){
-							counter++;
-						}
-					}
-					if ((counter/distances.length).toPrecision(2)>0.7){
-						console.log("FOUND WEEKLY DEPOSIT");
-						subscription = true;
-					}
-
-				}
-
-			}
+			done(null);
 		}
-		])
+	]);
 
 });
 //parses a JSON date string from API into a js date
