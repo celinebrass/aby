@@ -12,24 +12,22 @@ chipotleID = "56477c35d954610d00de1a85" #done
 hiltonID = "568ea1b33921211200ef1eb1" #done
 walmartID = "56241a13de4bf40b1711269c" #done
 netflixID = "568ea2c83921211200ef1eb2" #done
-date = datetime.date(2015, 6, 4)
-dayIncrement = datetime.timedelta(days=5)
+date = datetime.date(2015, 6, 1)
+# dayIncrement = datetime.timedelta(days=4)
 
-url = "http://api.reimaginebanking.com/accounts/"+accountID+"/purchases?key="+apiKey
+# url = "http://api.reimaginebanking.com/accounts/"+accountID+"/purchases?key="+apiKey
+url = "http://5bef55d0.ngrok.io/users/expense"
 
 while date.month != 1:
     body = {
-      "merchant_id": cvsID,
-      "medium": "balance",
-      "purchase_date": str(date),
-      "amount": random.randint(10,25),
-      "status": "pending",
-      "description": "CVS"
+      "date": str(date),
+      "amount": str(random.randint(1,250)),
+      "title": "Moar data"
     }
     res = requests.post(url, data = json.dumps(body), headers = {"content-type": "application/json"})
-    print res.json()
+    print res.text
 
-    dayIncrement = datetime.timedelta(days= (random.randint(5,10)))
+    dayIncrement = datetime.timedelta(days= (random.randint(0,10)))
     date = date + dayIncrement
     # if (count % 4 == 0):
     #     date = date.replace(day = date.day + 1)
