@@ -15,8 +15,8 @@ Parse.initialize("KCRcO4MK7dW8maRqktTwyXGswsP8NGxNC5QsnAaH", "nQBdEWP0OpyNSZNpbz
 router.get('/', function(req, res, next) {
 
 	request.get('http://api.reimaginebanking.com/atms?lat=38.9283&lng=-77.1753&rad=1&key=1a18b43f3fb7cdb8a3a25fb703a5e848').end(function (err, response){
-		console.log(response.status);
-		console.log(response.body);
+		// console.log(response.status);
+		// console.log(response.body);
 		res.render('index', { title: 'Express' });
 	});
 });
@@ -25,7 +25,7 @@ router.get('/', function(req, res, next) {
 
 router.get('/predict', function (req, res, next)  {
 	var bills = [];
-	async.waterfall([ 
+	async.waterfall([
 		function (done){
 			var apiCall = request.get('http://api.reimaginebanking.com/customers/' + customer + '/bills?key=' + key);
 			apiCall.set('Content-Type', 'application/json');
@@ -87,10 +87,10 @@ router.get('/predict', function (req, res, next)  {
 						}
 						done(null);
 					},
-					
+
 				], function (err){
 					callback();
-				}); 
+				});
 				}, function (err){
 					done(null, bills, accounts, creditPurchases, checkingPurchases);
 				}
@@ -200,7 +200,7 @@ router.get('/predict', function (req, res, next)  {
 					var newBill = new Bill();
 					var data = {
 						day: finalDay,
-						//TODO: get title of 
+						//TODO: get title of
 						title: title,
 						amount: avgDol,
 						repeat: "month",
@@ -253,7 +253,7 @@ router.get('/predict', function (req, res, next)  {
 						var newBill = new Bill();
 						var data = {
 							day: max,
-							//TODO: get title of 
+							//TODO: get title of
 							title: title,
 							amount: avgDol,
 							repeat: "month",
@@ -312,7 +312,7 @@ router.get('/predict', function (req, res, next)  {
 						var Habit = Parse.Object.extend("Habit");
 						var newHabit = new Habit();
 						var data = {
-							//TODO: get title of 
+							//TODO: get title of
 							title: title,
 							amount: average,
 							merchantID: merchant
@@ -402,7 +402,7 @@ router.get('/predict', function (req, res, next)  {
 });
 
 router.get('/expenseList', function (req, res, next) {
-	async.waterfall([ 
+	async.waterfall([
 		function (done){
 			console.log("1")
 			var query = new Parse.Query("Expense");
