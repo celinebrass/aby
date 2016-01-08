@@ -32,6 +32,7 @@ router.get('/balance', function(req, res, next) {
 
 router.get('/dayExpenses/:day', function(req, res, next) {
   //get total expenses for a given day
+
   res.send("I don't know what I'm doing");
 });
 
@@ -165,7 +166,7 @@ router.get('/:type/:id', function(req, res, next) {
       break;
 
     case "habit":
-      var Expense = Parse.Object.extend("Bill");
+      var Expense = Parse.Object.extend("Habit");
       var query = new Parse.Query(Expense);
       query.get(req.params.id, {
         success: function(cur) {
