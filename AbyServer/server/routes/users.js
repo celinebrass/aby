@@ -36,30 +36,86 @@ router.get('/dayExpenses/:day', function(req, res, next) {
 });
 
 //Get all expenses from Parse
-router.get('/expense', function(req, res, next) {
-  var Expense = Parse.Object.extend("Expense");
-  var query = new Parse.Query(Expense);
-  query.find({
-    success: function(result) {
-      var out = [];
-      for (i = 0; i < result.length; i++) {
-        var cur = result[i];
-        // console.log(cur.id);
-        var temp = {
-          id: cur.id,
-          amount: cur.get("amount"),
-          date: cur.get("date").toJSON(),
-          title: cur.get("title"),
-          type: cur.get("type")
+router.get('/:type', function(req, res, next) {
+  switch (req.params.type.toLowerCase()) {
+    case "expense":
+      var Expense = Parse.Object.extend("Expense");
+      var query = new Parse.Query(Expense);
+      query.find({
+        success: function(result) {
+          var out = [];
+          for (i = 0; i < result.length; i++) {
+            var cur = result[i];
+            // console.log(cur.id);
+            var temp = {
+              id: cur.id,
+              amount: cur.get("amount"),
+              date: cur.get("date").toJSON(),
+              title: cur.get("title"),
+            }
+            out.push(temp);
+          }
+          res.json(out);
+        },
+        error: function(err) {
+          res.send(err);
         }
-        out.push(temp);
-      }
-      res.json(out);
-    },
-    error: function(err) {
-      res.send(err);
-    }
-  });
+      });
+      break;
+
+    case "bill":
+      var Expense = Parse.Object.extend("Bill");
+      var query = new Parse.Query(Expense);
+      query.find({
+        success: function(result) {
+          var out = [];
+          for (i = 0; i < result.length; i++) {
+            var cur = result[i];
+            // console.log(cur.id);
+            var temp = {
+              id: cur.id,
+              amount: cur.get("amount"),
+              day: cur.get("day"),
+              title: cur.get("title"),
+              repeat: cur.get("repeat")
+            }
+            out.push(temp);
+          }
+          res.json(out);
+        },
+        error: function(err) {
+          res.send(err);
+        }
+      });
+      break;
+
+    case "habit":
+      var Expense = Parse.Object.extend("Habit");
+      var query = new Parse.Query(Expense);
+      query.find({
+        success: function(result) {
+          var out = [];
+          for (i = 0; i < result.length; i++) {
+            var cur = result[i];
+            // console.log(cur.id);
+            var temp = {
+              id: cur.id,
+              amount: cur.get("amount"),
+              title: cur.get("title"),
+            }
+            out.push(temp);
+          }
+          res.json(out);
+        },
+        error: function(err) {
+          res.send(err);
+        }
+      });
+      break;
+
+    default:
+      res.send("Incorrect type provided");
+  }
 });
 
 //Get expense by id
@@ -71,7 +127,7 @@ router.get('/expense/:id', function(req, res, next) {
       var temp = {
         id: cur.id,
         amount: cur.get("amount"),
-        date: cur.get("date").toDateString(),
+        date: cur.get("date").toJSON(),
         title: cur.get("title"),
         type: cur.get("type")
       }
@@ -85,6 +141,7 @@ router.get('/expense/:id', function(req, res, next) {
 
 //POST new expense to Parse
 router.post('/expense', function(req, res, next) {
+  console.log(req.body);
   var body = req.body;
   if (!body) {
     res.send("Request body empty");
@@ -95,11 +152,11 @@ router.post('/expense', function(req, res, next) {
   var data = {
     date: d,
     title: body.title,
-    amount: body.amount,
-    type: body.type
+    amount: body.amount
   }
   newExpense.save(data, {
     success: function(ret) {
+      console.log("Posted data");
       res.send("Expense has been pushed to Parse");
     },
     error: function(something, err) {
