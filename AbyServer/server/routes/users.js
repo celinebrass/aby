@@ -48,8 +48,9 @@ router.get('/expense', function(req, res, next) {
         var temp = {
           id: cur.id,
           amount: cur.get("amount"),
-          date: cur.get("date").toDateString(),
-          title: cur.get("title")
+          date: cur.get("date").toJSON(),
+          title: cur.get("title"),
+          type: cur.get("type")
         }
         out.push(temp);
       }
@@ -71,7 +72,8 @@ router.get('/expense/:id', function(req, res, next) {
         id: cur.id,
         amount: cur.get("amount"),
         date: cur.get("date").toDateString(),
-        title: cur.get("title")
+        title: cur.get("title"),
+        type: cur.get("type")
       }
       res.json(temp);
     },
@@ -93,7 +95,8 @@ router.post('/expense', function(req, res, next) {
   var data = {
     date: d,
     title: body.title,
-    amount: body.amount
+    amount: body.amount,
+    type: body.type
   }
   newExpense.save(data, {
     success: function(ret) {
@@ -122,6 +125,20 @@ router.delete('/expense/:id', function(req, res, next) {
     },
     error: function(something, error) {
       res.send(error);
+    }
+  });
+});
+
+router.put('expense/:id', function(req, res, next) {
+  var Expense = Parse.Object.extend("Expense");
+  var query = new Parse.Query(Expense);
+  query.get(req.params.id, {
+    success: function(result) {
+      result.set("date", new Date(req.body.date));
+      result.set("title", req.body.date);
+      result.set("amount", req.body.amount);
+      result.set("type", req.body.type);
+      result.save();
     }
   });
 });
