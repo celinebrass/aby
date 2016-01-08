@@ -87,29 +87,14 @@ router.get('/predict', function (req, res, next)  {
 						}
 						done(null);
 					},
-					/*function (done){
-						var apiCall = request.get('http://api.reimaginebanking.com/accounts/'+ account._id + '/deposits?key=' + key);
-						apiCall.set('Content-Type', 'application/json');
-						apiCall.end(function (err, response) {
-							var depositArray = JSON.parse(response.text);
-							var minDate = sixMonths();
-							depositArray.forEach(function(deposit){
-								var depositDate = toDate(deposit.transaction_date);
-								if (depositDate.getTime()>=minDate.getTime()){
-									deposits.push(deposit);
-								}
-							});
-							done(null)
-						});
-
-					}*/
-
-					], function (err){
-						callback();
-					}); 
-		}, function (err){
-			done(null, bills, accounts, creditPurchases, checkingPurchases);
-		});
+					
+				], function (err){
+					callback();
+				}); 
+				}, function (err){
+					done(null, bills, accounts, creditPurchases, checkingPurchases);
+				}
+			);
 		},
 		//now, try to find patterns
 		function (bills, accounts, creditPurchases, checkingPurchases, done){
@@ -169,6 +154,7 @@ router.get('/predict', function (req, res, next)  {
 				var dates = [];
 				var amounts = []
 				var title = purchases[0].description;
+				var merchant = group;
 				purchases.map(function(purchase) {
 					var date = toDate(purchase.purchase_date);
 					dates.push(date.getTime());
@@ -197,19 +183,19 @@ router.get('/predict', function (req, res, next)  {
 						counter++;
 					}
 				}
-				if ((counter/distances.length).toPrecision(2)>0.7){
+				if ((counter/distances.length)>0.7){
 					console.log("FOUND MONTHLY SUBSCRIPTION");
 					var total = 0.0;
 					for (var i = 0; i<days.length; i++){
 						total += days[i];
 					}
-					var avg = (total/days.length).toPrecision(2);
+					var avg = (total/days.length);
 					var finalDay = Math.round(avg);
 					var dollar = 0;
 					for (var i = 0; i<amounts.length; i++){
 						dollar += amounts[i];
 					}
-					var avgDol = (dollar/amounts.length).toPrecision(2);
+					var avgDol = (dollar/amounts.length);
 					var Bill = Parse.Object.extend("Bill");
 					var newBill = new Bill();
 					var data = {
@@ -217,7 +203,8 @@ router.get('/predict', function (req, res, next)  {
 						//TODO: get title of 
 						title: title,
 						amount: avgDol,
-						repeat: "month"
+						repeat: "month",
+						merchantID: merchant
 					}
 					newBill.save(data, {
 						success: function(ret) {
@@ -242,7 +229,7 @@ router.get('/predict', function (req, res, next)  {
 							counter++;
 						}
 					}
-					if ((counter/distances.length).toPrecision(2)>0.7){
+					if ((counter/distances.length)>0.7){
 						console.log("FOUND WEEKLY SUBSCRIPTION");
 						var week = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 						var weekDays = [0,0,0,0,0,0,0]
@@ -261,7 +248,7 @@ router.get('/predict', function (req, res, next)  {
 								max = i;
 							}
 						}
-						var avgDol = (dollar/amount.length).toPrecision(2);
+						var avgDol = (dollar/amount.length);
 						var Bill = Parse.Object.extend("Bill");
 						var newBill = new Bill();
 						var data = {
@@ -269,7 +256,8 @@ router.get('/predict', function (req, res, next)  {
 							//TODO: get title of 
 							title: title,
 							amount: avgDol,
-							repeat: "month"
+							repeat: "month",
+							merchantID: merchant
 						}
 						newBill.save(data, {
 							success: function(ret) {
@@ -320,13 +308,14 @@ router.get('/predict', function (req, res, next)  {
 						console.log("FINAL NUMBERS");
 						console.log(total);
 						console.log(size);
-						average = (total/size).toPrecision(2);
+						average = (total/size);
 						var Habit = Parse.Object.extend("Habit");
 						var newHabit = new Habit();
 						var data = {
 							//TODO: get title of 
 							title: title,
-							amount: average
+							amount: average,
+							merchantID: merchant
 						}
 						newHabit.save(data, {
 							success: function(ret) {
@@ -347,6 +336,7 @@ router.get('/predict', function (req, res, next)  {
 			for (var i = 0; i<billGroups.size; i++){
 			//for (billGroup in billGroups){
 				billGroup = billGroups[i];
+				var merchant = billGroup;
 				var title = billGroup.nickname;
 				console.log("GETTING INTO LOOP");
 				console.log("Billgroup is")
@@ -383,7 +373,7 @@ router.get('/predict', function (req, res, next)  {
 						amt += bill.payment_amount;
 					}
 
-					var average = (amt/(bills.length)).toPrecision(2);
+					var average = (amt/(bills.length));
 
 					var Bill = Parse.Object.extend("Bill");
 					var newBill = new Bill();
@@ -391,7 +381,8 @@ router.get('/predict', function (req, res, next)  {
 						day: day,
 						title: title,
 						amount: average,
-						repeat: "month"
+						repeat: "month",
+						merchantID: merchant
 					}
 					newBill.save(data, {
 						success: function(ret) {
@@ -405,12 +396,139 @@ router.get('/predict', function (req, res, next)  {
 			}
 			done(null);
 		}
-	]);
+		]);
 
 });
+
+router.get('/expenseList', function (req, res, next) {
+	async.waterfall([ 
+		function (done){
+			console.log("1")
+			var query = new Parse.Query("Expense");
+			query.find({
+				success: function(result) {
+					done(null, result);
+				}
+			});
+		},
+		function (expenses, done){
+			var query = new Parse.Query("Habit");
+			console.log("2")
+			query.find({
+				success: function(result) {
+					done(null, expenses, result);
+				}
+			});
+		},
+		function (expenses, habits, done){
+			var query = new Parse.Query("Bill");
+			console.log("3")
+			query.find({
+				success: function(result) {
+					done(null, expenses, habits, result);
+				}
+			});
+		},
+		function (expenses, habits , bills, done){
+			var query = new Parse.Query("Deposits");
+			console.log("4")
+			query.find({
+				success: function(result) {
+					done(null, expenses, habits, bills, result);
+				}
+			});
+		},
+		function (expenses, habits, bills, deposits, done) {
+			console.log("5")
+			var creditBal = 0.0;
+			var checkingBal = 0.0;
+			var creditAccount;
+			var apiCall = request.get('http://api.reimaginebanking.com/customers/'+customer+ '/accounts?key=' + key);
+			apiCall.set('Content-Type', 'application/json');
+			apiCall.end(function (err, response) {
+				console.log(response);
+				console.log("in response");
+				console.log(response.text);
+				var accounts = JSON.parse(response.text);
+				console.log(accounts.length);
+				for (var i = 0; i<accounts.length; i++){
+					console.log("iiiii" + i);
+					if (accounts[i].type == "Credit Card") {
+						creditAccount = accounts[i];
+						creditBal += accounts[i].balance;
+					}
+					else if ( accounts[i] == "Checking") {
+						checkingBal += accounts[i].balance;
+					}
+				}
+				done (err, expenses, habits, bills, deposits, checkingBal, creditBal, creditAccount);
+			});
+		},
+		function (expenses, habits, bills, deposits, checkingBal, creditBal, account, done){
+			console.log("6")
+			var purchases = [];
+			var apiCall = request.get('http://api.reimaginebanking.com/accounts/56241a14de4bf40b17112f78/purchases?key=1a18b43f3fb7cdb8a3a25fb703a5e848');
+			apiCall.set('Content-Type', 'application/json');
+			apiCall.end(function (err, response) {
+				var purchaseArray = JSON.parse(response.text);
+				var today = new Date();
+				var minDate = new Date(today.getYear(), today.getMonth(), 1);
+				for ( var i = 0; i<purchaseArray.length; i++){
+					console.log("****" + i);
+					var purchase = purchaseArray[i];
+					var purchaseDate  = toDate(purchase.purchase_date);
+					if (purchaseDate.getTime()>=minDate.getTime()){
+						purchases.push(purchase);
+					}
+				}
+				done(null, expenses, habits, bills, deposits, checkingBal, creditBal, account, purchases);
+			});
+		},
+		function (expenses, habits, bills, deposits, checkingBal, creditBal, account, purchases, done) {
+			console.log("7")
+			var habitArray = [];
+			var billArray = [];
+			for (var i = 0; i<habits.length; i ++){
+				var habit = habits[i];
+				var merchant = habit.merchantID;
+				var habitObj = {'total' : habit.amount,
+								'used'  : 0.0,
+								'title' : habit.title};
+				for (var i = 0; i<purchases.length; i++){
+					var purchase = purchases[i];
+					if (purchase.merchant_id == merchant){
+						habit.total-=purchase.amount;
+						purchases.splice(i);
+					}
+				}
+				habitArray.push(habit);
+			}
+			done(null, expenses, bills, deposits, checkingBal, creditBal, account, purchases, habitArray)
+		},
+		function (expenses, bills, deposits, checkingBal, creditBal, account, purchases, habitArray, done) {
+			console.log("8")
+			var otherBalance = 0.0
+			for (var i = 0; i<purchases.length; i++){
+				var purchase = purchases[i];
+				otherBalance+=purchase.amount;
+			}
+			done (null, expenses, bills, deposits, checkingBal, creditBal, account, purchases, habitArray, otherBalance)
+		},
+		function (expenses, bills, deposits, checkingBal, creditBal, account, purchases, habitArray, otherBalance, done){
+			console.log("9")
+			var temp = { "habits": habitArray,
+						 "bills" : bills,
+						 "otherBalance": otherBalance
+						};
+			res.json(temp);
+
+		}
+	])
+});
+
 //parses a JSON date string from API into a js date
 function toDate(jsonString) {
-	console.log(jsonString);
+	//console.log(jsonString);
 	jsonString = jsonString.replace("\\\"", "");
 	jsonString = jsonString.replace("\\\\", "");
 	jsonString = jsonString.replace("\"", "");

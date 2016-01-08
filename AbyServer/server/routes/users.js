@@ -63,7 +63,7 @@ router.get('/expense', function(req, res, next) {
 });
 
 //Get expense by id
-router.get('/expense/:id', function(req, res, next) {
+router.get('/expense/:id', function (req, res, next) {
   var Expense = Parse.Object.extend("Expense");
   var query = new Parse.Query(Expense);
   query.get(req.params.id, {
@@ -84,7 +84,7 @@ router.get('/expense/:id', function(req, res, next) {
 });
 
 //POST new expense to Parse
-router.post('/expense', function(req, res, next) {
+router.post('/expense', function (req, res, next) {
   var body = req.body;
   if (!body) {
     res.send("Request body empty");
@@ -109,7 +109,7 @@ router.post('/expense', function(req, res, next) {
 });
 
 //DELETE expense by id
-router.delete('/expense/:id', function(req, res, next) {
+router.delete('/expense/:id', function (req, res, next) {
   var Expense = Parse.Object.extend("Expense");
   var query = new Parse.Query(Expense);
   query.get(req.params.id, {
@@ -129,7 +129,7 @@ router.delete('/expense/:id', function(req, res, next) {
   });
 });
 
-router.put('/expense/:id', function(req, res, next) {
+router.put('/expense/:id', function (req, res, next) {
   var Expense = Parse.Object.extend("Expense");
   var query = new Parse.Query(Expense);
   query.get(req.params.id, {
