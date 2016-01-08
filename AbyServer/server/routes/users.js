@@ -30,7 +30,7 @@ router.get('/balance', function(req, res, next) {
   });
 });
 
-router.get('/dayExpenses', function(req, res, next) {
+router.get('/dayExpenses/:day', function(req, res, next) {
   //get total expenses for a given day
   res.send("I don't know what I'm doing");
 });
