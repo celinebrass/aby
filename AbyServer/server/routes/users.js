@@ -48,7 +48,7 @@ router.get('/expense', function(req, res, next) {
         var temp = {
           id: cur.id,
           amount: cur.get("amount"),
-          date: cur.get("date"),
+          date: cur.get("date").toDateString(),
           title: cur.get("title")
         }
         out.push(temp);
@@ -70,7 +70,7 @@ router.get('/expense/:id', function(req, res, next) {
       var temp = {
         id: cur.id,
         amount: cur.get("amount"),
-        date: cur.get("date"),
+        date: cur.get("date").toDateString(),
         title: cur.get("title")
       }
       res.json(temp);
@@ -89,8 +89,9 @@ router.post('/expense', function(req, res, next) {
   }
   var Expense = Parse.Object.extend("Expense");
   var newExpense = new Expense();
+  var d = new Date(body.date);
   var data = {
-    date: body.date,
+    date: d,
     title: body.title,
     amount: body.amount
   }
