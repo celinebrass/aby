@@ -129,7 +129,7 @@ router.delete('/expense/:id', function(req, res, next) {
   });
 });
 
-router.put('expense/:id', function(req, res, next) {
+router.put('/expense/:id', function(req, res, next) {
   var Expense = Parse.Object.extend("Expense");
   var query = new Parse.Query(Expense);
   query.get(req.params.id, {
@@ -146,7 +146,11 @@ router.put('expense/:id', function(req, res, next) {
       if (req.body.type) {
         result.set("type", req.body.type);
       }
-      result.save();
+      result.save(null, {
+        success: function(obj) {
+          res.send("I think the update worked")
+        }
+      });
     }
   });
 });
