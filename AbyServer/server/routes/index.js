@@ -394,6 +394,7 @@ router.get('/predict', function (req, res, next)  {
 					});
 				}
 			}
+			res.send("done");
 			done(null);
 		}
 		]);
