@@ -134,10 +134,18 @@ router.put('expense/:id', function(req, res, next) {
   var query = new Parse.Query(Expense);
   query.get(req.params.id, {
     success: function(result) {
-      result.set("date", new Date(req.body.date));
-      result.set("title", req.body.date);
-      result.set("amount", req.body.amount);
-      result.set("type", req.body.type);
+      if (req.body.date) {
+        result.set("date", new Date(req.body.date));
+      }
+      if (req.body.title) {
+        result.set("title", req.body.title);
+      }
+      if (req.body.amount) {
+        result.set("amount", req.body.amount);
+      }
+      if (req.body.type) {
+        result.set("type", req.body.type);
+      }
       result.save();
     }
   });
