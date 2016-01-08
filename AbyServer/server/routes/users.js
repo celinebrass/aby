@@ -77,7 +77,8 @@ router.get('/:type', function(req, res, next) {
               amount: cur.get("amount"),
               day: cur.get("day"),
               title: cur.get("title"),
-              repeat: cur.get("repeat")
+              repeat: cur.get("repeat"),
+              merchantID: cur.get("merchantID")
             }
             out.push(temp);
           }
@@ -102,6 +103,7 @@ router.get('/:type', function(req, res, next) {
               id: cur.id,
               amount: cur.get("amount"),
               title: cur.get("title"),
+              merchantID: cur.get("merchantID")
             }
             out.push(temp);
           }
@@ -119,97 +121,323 @@ router.get('/:type', function(req, res, next) {
 });
 
 //Get expense by id
-router.get('/expense/:id', function(req, res, next) {
-  var Expense = Parse.Object.extend("Expense");
-  var query = new Parse.Query(Expense);
-  query.get(req.params.id, {
-    success: function(cur) {
-      var temp = {
-        id: cur.id,
-        amount: cur.get("amount"),
-        date: cur.get("date").toJSON(),
-        title: cur.get("title"),
-        type: cur.get("type")
-      }
-      res.json(temp);
-    },
-    error: function(something, error) {
-      res.send(error);
-    }
-  });
+router.get('/:type/:id', function(req, res, next) {
+  switch (req.params.type.toLowerCase()) {
+    case "expense":
+      var Expense = Parse.Object.extend("Expense");
+      var query = new Parse.Query(Expense);
+      query.get(req.params.id, {
+        success: function(cur) {
+          var temp = {
+            id: cur.id,
+            amount: cur.get("amount"),
+            date: cur.get("date").toJSON(),
+            title: cur.get("title"),
+            type: cur.get("type")
+          }
+          res.json(temp);
+        },
+        error: function(something, error) {
+          res.send(error);
+        }
+      });
+      break;
+
+    case "bill":
+      var Expense = Parse.Object.extend("Bill");
+      var query = new Parse.Query(Expense);
+      query.get(req.params.id, {
+        success: function(cur) {
+          var temp = {
+            id: cur.id,
+            amount: cur.get("amount"),
+            day: cur.get("day"),
+            title: cur.get("title"),
+            repeat: cur.get("repeat"),
+            merchantID: cur.get("merchantID")
+          }
+          res.json(temp);
+        },
+        error: function(something, error) {
+          res.send(error);
+        }
+      });
+      break;
+
+    case "habit":
+      var Expense = Parse.Object.extend("Bill");
+      var query = new Parse.Query(Expense);
+      query.get(req.params.id, {
+        success: function(cur) {
+          var temp = {
+            id: cur.id,
+            amount: cur.get("amount"),
+            title: cur.get("title"),
+            merchantID: cur.get("merchantID")
+          }
+          res.json(temp);
+        },
+        error: function(something, error) {
+          res.send(error);
+        }
+      });
+      break;
+
+    default:
+      res.send("Incorrect type provided");
+  }
 });
 
 //POST new expense to Parse
-router.post('/expense', function(req, res, next) {
-  console.log(req.body);
+router.post('/:type', function(req, res, next) {
   var body = req.body;
   if (!body) {
     res.send("Request body empty");
   }
-  var Expense = Parse.Object.extend("Expense");
-  var newExpense = new Expense();
-  var d = new Date(body.date);
-  var data = {
-    date: d,
-    title: body.title,
-    amount: body.amount
+  switch (req.params.type.toLowerCase()) {
+    case "expense":
+      var Expense = Parse.Object.extend("Expense");
+      var newExpense = new Expense();
+      var d = new Date(body.date);
+      var data = {
+        date: d,
+        title: body.title,
+        amount: body.amount
+      }
+      newExpense.save(data, {
+        success: function(ret) {
+          console.log("Posted data");
+          res.send("Expense has been pushed to Parse");
+        },
+        error: function(something, err) {
+          res.send(err);
+        }
+      });
+      break;
+
+    case "bill":
+      var Expense = Parse.Object.extend("Bill");
+      var newExpense = new Expense();
+      var data = {
+        day: body.day,
+        title: body.title,
+        amount: body.amount,
+        repeat: body.repeat,
+        merchantID: body.merchantID
+      }
+      newExpense.save(data, {
+        success: function(ret) {
+          console.log("Posted data");
+          res.send("Bill has been pushed to Parse");
+        },
+        error: function(something, err) {
+          res.send(err);
+        }
+      });
+      break;
+
+    case "habit":
+      var Expense = Parse.Object.extend("Habit");
+      var newExpense = new Expense();
+      var data = {
+        title: body.title,
+        amount: body.amount,
+        merchantID: body.merchantID
+      }
+      newExpense.save(data, {
+        success: function(ret) {
+          console.log("Posted data");
+          res.send("Habit has been pushed to Parse");
+        },
+        error: function(something, err) {
+          res.send(err);
+        }
+      });
+      break;
+
+    default:
+      res.send("Incorrect type provided");
   }
-  newExpense.save(data, {
-    success: function(ret) {
-      console.log("Posted data");
-      res.send("Expense has been pushed to Parse");
-    },
-    error: function(something, err) {
-      res.send(err);
-    }
-  });
 });
 
 //DELETE expense by id
-router.delete('/expense/:id', function(req, res, next) {
-  var Expense = Parse.Object.extend("Expense");
-  var query = new Parse.Query(Expense);
-  query.get(req.params.id, {
-    success: function(exp) {
-      exp.destroy({
-        success: function(obj) {
-          res.send("Deletion success");
+router.delete('/:type/:id', function(req, res, next) {
+  switch (req.params.type.toLowerCase()) {
+    case "expense":
+      var Expense = Parse.Object.extend("Expense");
+      var query = new Parse.Query(Expense);
+      query.get(req.params.id, {
+        success: function(exp) {
+          exp.destroy({
+            success: function(obj) {
+              res.send("Deletion success");
+            },
+            error: function(obj, error) {
+              res.send(error);
+            }
+          });
         },
-        error: function(obj, error) {
+        error: function(something, error) {
           res.send(error);
         }
       });
-    },
-    error: function(something, error) {
-      res.send(error);
-    }
-  });
-});
+      break;
 
-router.put('/expense/:id', function(req, res, next) {
-  var Expense = Parse.Object.extend("Expense");
-  var query = new Parse.Query(Expense);
-  query.get(req.params.id, {
-    success: function(result) {
-      if (req.body.date) {
-        result.set("date", new Date(req.body.date));
-      }
-      if (req.body.title) {
-        result.set("title", req.body.title);
-      }
-      if (req.body.amount) {
-        result.set("amount", req.body.amount);
-      }
-      if (req.body.type) {
-        result.set("type", req.body.type);
-      }
-      result.save(null, {
-        success: function(obj) {
-          res.send("I think the update worked")
+    case "bill":
+      var Expense = Parse.Object.extend("Bill");
+      var query = new Parse.Query(Expense);
+      query.get(req.params.id, {
+        success: function(exp) {
+          exp.destroy({
+            success: function(obj) {
+              res.send("Deletion success");
+            },
+            error: function(obj, error) {
+              res.send(error);
+            }
+          });
+        },
+        error: function(something, error) {
+          res.send(error);
         }
       });
-    }
-  });
+      break;
+
+    case "habit":
+      var Expense = Parse.Object.extend("Habit");
+      var query = new Parse.Query(Expense);
+      query.get(req.params.id, {
+        success: function(exp) {
+          exp.destroy({
+            success: function(obj) {
+              res.send("Deletion success");
+            },
+            error: function(obj, error) {
+              res.send(error);
+            }
+          });
+        },
+        error: function(something, error) {
+          res.send(error);
+        }
+      });
+      break;
+
+    default:
+      res.send("Incorrect type provided");
+  }
+});
+
+router.put('/:type/:id', function(req, res, next) {
+  switch (req.params.type.toLowerCase()) {
+    case "expense":
+      var Expense = Parse.Object.extend("Expense");
+      var query = new Parse.Query(Expense);
+      query.get(req.params.id, {
+        success: function(result) {
+          if (req.body.date) {
+            result.set("date", new Date(req.body.date));
+          }
+          if (req.body.title) {
+            result.set("title", req.body.title);
+          }
+          if (req.body.amount) {
+            result.set("amount", req.body.amount);
+          }
+          if (req.body.type) {
+            result.set("type", req.body.type);
+          }
+          if (req.body.day) {
+            result.set("day", req.body.day);
+          }
+          if (req.body.merchantID) {
+            result.set("merchantID", req.body.merchantID);
+          }
+          if (req.body.repeat) {
+            result.set("repeat", req.body.repeat);
+          }
+          result.save(null, {
+            success: function(obj) {
+              res.send("I think the update worked")
+            }
+          });
+        }
+      });
+      break;
+
+    case "bill":
+      var Expense = Parse.Object.extend("Bill");
+      var query = new Parse.Query(Expense);
+      query.get(req.params.id, {
+        success: function(result) {
+          if (req.body.date) {
+            result.set("date", new Date(req.body.date));
+          }
+          if (req.body.title) {
+            result.set("title", req.body.title);
+          }
+          if (req.body.amount) {
+            result.set("amount", req.body.amount);
+          }
+          if (req.body.type) {
+            result.set("type", req.body.type);
+          }
+          if (req.body.day) {
+            result.set("day", req.body.day);
+          }
+          if (req.body.merchantID) {
+            result.set("merchantID", req.body.merchantID);
+          }
+          if (req.body.repeat) {
+            result.set("repeat", req.body.repeat);
+          }
+          result.save(null, {
+            success: function(obj) {
+              res.send("I think the update worked")
+            }
+          });
+        }
+      });
+      break;
+
+    case "habit":
+      var Expense = Parse.Object.extend("Habit");
+      var query = new Parse.Query(Expense);
+      query.get(req.params.id, {
+        success: function(result) {
+          if (req.body.date) {
+            result.set("date", new Date(req.body.date));
+          }
+          if (req.body.title) {
+            result.set("title", req.body.title);
+          }
+          if (req.body.amount) {
+            result.set("amount", req.body.amount);
+          }
+          if (req.body.type) {
+            result.set("type", req.body.type);
+          }
+          if (req.body.day) {
+            result.set("day", req.body.day);
+          }
+          if (req.body.merchantID) {
+            result.set("merchantID", req.body.merchantID);
+          }
+          if (req.body.repeat) {
+            result.set("repeat", req.body.repeat);
+          }
+          result.save(null, {
+            success: function(obj) {
+              res.send("I think the update worked")
+            }
+          });
+        }
+      });
+      break;
+
+    default:
+
+  }
 });
 
 

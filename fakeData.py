@@ -21,8 +21,8 @@ url = "http://5bef55d0.ngrok.io/users/expense"
 while date.month != 1:
     body = {
       "date": str(date),
-      "amount": str(random.randint(10,25)),
-      "title": "Dummy data"
+      "amount": str(random.randint(1,250)),
+      "title": "Moar data"
     }
     res = requests.post(url, data = json.dumps(body), headers = {"content-type": "application/json"})
     print res.text
