@@ -121,30 +121,6 @@ router.get('/:type', function(req, res, next) {
 });
 
 //Get expense by id
-<<<<<<< HEAD
-router.get('/expense/:id', function (req, res, next) {
-  var Expense = Parse.Object.extend("Expense");
-  var query = new Parse.Query(Expense);
-  query.get(req.params.id, {
-    success: function(cur) {
-      var temp = {
-        id: cur.id,
-        amount: cur.get("amount"),
-        date: cur.get("date").toDateString(),
-        title: cur.get("title"),
-        type: cur.get("type")
-      }
-      res.json(temp);
-    },
-    error: function(something, error) {
-      res.send(error);
-    }
-  });
-});
-
-//POST new expense to Parse
-router.post('/expense', function (req, res, next) {
-=======
 router.get('/:type/:id', function(req, res, next) {
   switch (req.params.type.toLowerCase()) {
     case "expense":
@@ -214,7 +190,6 @@ router.get('/:type/:id', function(req, res, next) {
 
 //POST new expense to Parse
 router.post('/:type', function(req, res, next) {
->>>>>>> c4ec2d61544095af1e2b339b1d3803f4dc114ba7
   var body = req.body;
   if (!body) {
     res.send("Request body empty");
@@ -286,16 +261,6 @@ router.post('/:type', function(req, res, next) {
 });
 
 //DELETE expense by id
-<<<<<<< HEAD
-router.delete('/expense/:id', function (req, res, next) {
-  var Expense = Parse.Object.extend("Expense");
-  var query = new Parse.Query(Expense);
-  query.get(req.params.id, {
-    success: function(exp) {
-      exp.destroy({
-        success: function(obj) {
-          res.send("Deletion success");
-=======
 router.delete('/:type/:id', function(req, res, next) {
   switch (req.params.type.toLowerCase()) {
     case "expense":
@@ -311,7 +276,6 @@ router.delete('/:type/:id', function(req, res, next) {
               res.send(error);
             }
           });
->>>>>>> c4ec2d61544095af1e2b339b1d3803f4dc114ba7
         },
         error: function(something, error) {
           res.send(error);
@@ -364,28 +328,6 @@ router.delete('/:type/:id', function(req, res, next) {
   }
 });
 
-<<<<<<< HEAD
-router.put('/expense/:id', function (req, res, next) {
-  var Expense = Parse.Object.extend("Expense");
-  var query = new Parse.Query(Expense);
-  query.get(req.params.id, {
-    success: function(result) {
-      if (req.body.date) {
-        result.set("date", new Date(req.body.date));
-      }
-      if (req.body.title) {
-        result.set("title", req.body.title);
-      }
-      if (req.body.amount) {
-        result.set("amount", req.body.amount);
-      }
-      if (req.body.type) {
-        result.set("type", req.body.type);
-      }
-      result.save(null, {
-        success: function(obj) {
-          res.send("I think the update worked")
-=======
 router.put('/:type/:id', function(req, res, next) {
   switch (req.params.type.toLowerCase()) {
     case "expense":
@@ -419,7 +361,6 @@ router.put('/:type/:id', function(req, res, next) {
               res.send("I think the update worked")
             }
           });
->>>>>>> c4ec2d61544095af1e2b339b1d3803f4dc114ba7
         }
       });
       break;

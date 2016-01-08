@@ -22,7 +22,7 @@ while date.month != 1:
     body = {
       "date": str(date),
       "amount": str(random.randint(1,250)),
-      "title": "Moar data"
+      "title": "Looks so good I wanna da-ta"
     }
     res = requests.post(url, data = json.dumps(body), headers = {"content-type": "application/json"})
     print res.text
